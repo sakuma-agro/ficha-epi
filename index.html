@@ -16,35 +16,6 @@
 </head>
 <body>
 
-<!-- ============ TELA: CONEXÃO ============ -->
-<section class="centro tela" id="telaConexao" hidden>
-  <div class="caixa">
-    <img src="icons/icon-192.png" alt="">
-    <h1>Conectar ao Supabase</h1>
-    <p class="sub">Cole os dados do seu projeto. Ficam gravados só neste aparelho.</p>
-    <div class="aviso erro" id="erroConexao" hidden></div>
-    <form id="formConexao">
-      <div class="grade">
-        <label class="campo">URL do projeto
-          <input type="text" id="conUrl" placeholder="https://xxxxxxxx.supabase.co" required
-                 inputmode="url" autocomplete="off" spellcheck="false">
-        </label>
-        <label class="campo">Chave anon public
-          <input type="text" id="conChave" placeholder="eyJhbGciOi..." required
-                 autocomplete="off" spellcheck="false">
-        </label>
-      </div>
-      <div class="barra"><button class="btn principal" type="submit">Conectar</button></div>
-    </form>
-    <ol class="passos">
-      <li>Em <code>supabase.com</code>, abra seu projeto.</li>
-      <li>Vá em <b>Project Settings → API</b>.</li>
-      <li>Copie <b>Project URL</b> e a chave <b>anon public</b>.</li>
-      <li>Rode o SQL do arquivo <code>supabase.sql</code> em <b>SQL Editor</b>.</li>
-    </ol>
-  </div>
-</section>
-
 <!-- ============ TELA: LOGIN ============ -->
 <section class="centro tela" id="telaLogin" hidden>
   <div class="caixa">
@@ -63,7 +34,6 @@
       </div>
       <div class="barra"><button class="btn principal" type="submit" id="btnEntrar">Entrar</button></div>
     </form>
-    <div class="barra"><button class="btn mini" type="button" id="btnTrocarProjeto">Trocar de projeto Supabase</button></div>
   </div>
 </section>
 
