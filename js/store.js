@@ -5,6 +5,15 @@ const CHAVE_CONF = 'epi.conexao';
 const CHAVE_CACHE = 'epi.cache';
 const CHAVE_FILA = 'epi.fila';
 
+// Projeto Supabase da SAKUMA. A chave "publishable" é feita para ficar
+// visível no navegador: quem protege os dados são as regras de acesso
+// (RLS) do supabase.sql, que só liberam leitura e escrita para quem está
+// logado. Sem login, esta chave não enxerga nada.
+const CONEXAO_PADRAO = {
+  url: 'https://ysvmfmnwbcxgsrjewwsy.supabase.co',
+  chave: 'sb_publishable_3oelhDSjKjwwJ67IJDdSAg_-Hmgs3Pn',
+};
+
 export const estado = {
   conexao: null,      // {url, chave}
   cliente: null,
@@ -38,7 +47,7 @@ const gravar = (chave, valor) => {
 };
 
 /* ---------------- conexão ---------------- */
-export function lerConexao() { return ler(CHAVE_CONF, null); }
+export function lerConexao() { return ler(CHAVE_CONF, null) || CONEXAO_PADRAO; }
 
 export function salvarConexao(url, chave) {
   const limpa = { url: String(url).trim().replace(/\/+$/, ''), chave: String(chave).trim() };
@@ -47,6 +56,7 @@ export function salvarConexao(url, chave) {
   criarCliente();
 }
 
+/** Volta para o projeto padrão da SAKUMA (usado por "Trocar de projeto"). */
 export function apagarConexao() {
   localStorage.removeItem(CHAVE_CONF);
   estado.conexao = null; estado.cliente = null; estado.sessao = null;
