@@ -1,0 +1,120 @@
+-- =====================================================================
+--  Ficha de EPI · SAKUMA Agronegócios
+--  Rode este arquivo inteiro em: Supabase → SQL Editor → New query → Run
+--  Pode rodar de novo sem problema: nada é apagado.
+-- =====================================================================
+
+-- ---------- funcionários ----------
+create table if not exists public.funcionarios (
+  id           uuid primary key default gen_random_uuid(),
+  nome         text not null,
+  cadastro     text,
+  admissao     date,
+  cargo        text,
+  empregador   text,
+  cpf          text,
+  setor        text default 'CAMPO',
+  tam_calcado  text,
+  tam_camisa   text,
+  situacao     text not null default 'ATIVO',
+  criado_em    timestamptz not null default now(),
+  atualizado_em timestamptz not null default now()
+);
+create index if not exists funcionarios_nome_idx on public.funcionarios (nome);
+
+-- ---------- catálogo de EPIs ----------
+create table if not exists public.epis (
+  id          uuid primary key default gen_random_uuid(),
+  descricao   text not null,
+  ca          text,
+  observacao  text,
+  atividade   text,
+  ativo       boolean not null default true,
+  criado_em   timestamptz not null default now()
+);
+
+-- ---------- fichas preenchidas ----------
+create table if not exists public.fichas (
+  id              uuid primary key default gen_random_uuid(),
+  funcionario_id  uuid not null references public.funcionarios(id) on delete cascade,
+  mes             smallint not null,
+  ano             smallint not null,
+  setor           text,
+  linhas          jsonb not null default '[]'::jsonb,
+  criado_em       timestamptz not null default now(),
+  atualizado_em   timestamptz not null default now()
+);
+create index if not exists fichas_func_idx on public.fichas (funcionario_id, ano, mes);
+
+-- ---------- modelo da ficha (uma linha só) ----------
+create table if not exists public.modelo (
+  id                 smallint primary key default 1 check (id = 1),
+  titulo             text,
+  rotulo_faz         text,
+  rotulo_mer         text,
+  legenda_faz        jsonb default '[]'::jsonb,
+  legenda_mer        jsonb default '[]'::jsonb,
+  declaracao_titulo  text,
+  declaracoes        jsonb default '[]'::jsonb,
+  declaracao_longa   text,
+  rodape_demissao    text,
+  setor_padrao       text default 'CAMPO',
+  linhas_padrao      smallint default 20,
+  cargos             jsonb default '[]'::jsonb,
+  empregadores       jsonb default '[]'::jsonb,
+  atualizado_em      timestamptz not null default now()
+);
+
+-- ---------- carimbo de atualização ----------
+create or replace function public.marcar_atualizacao()
+returns trigger language plpgsql as $$
+begin
+  new.atualizado_em = now();
+  return new;
+end $$;
+
+drop trigger if exists tg_func_upd on public.funcionarios;
+create trigger tg_func_upd before update on public.funcionarios
+  for each row execute function public.marcar_atualizacao();
+
+drop trigger if exists tg_fichas_upd on public.fichas;
+create trigger tg_fichas_upd before update on public.fichas
+  for each row execute function public.marcar_atualizacao();
+
+drop trigger if exists tg_modelo_upd on public.modelo;
+create trigger tg_modelo_upd before update on public.modelo
+  for each row execute function public.marcar_atualizacao();
+
+-- =====================================================================
+--  SEGURANÇA
+--  Só quem estiver logado (usuário criado por você no Supabase) enxerga
+--  ou altera qualquer coisa. Visitante anônimo não lê nada.
+-- =====================================================================
+alter table public.funcionarios enable row level security;
+alter table public.epis         enable row level security;
+alter table public.fichas       enable row level security;
+alter table public.modelo       enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['funcionarios','epis','fichas','modelo'] loop
+    execute format('drop policy if exists "logados_leem" on public.%I', t);
+    execute format('drop policy if exists "logados_escrevem" on public.%I', t);
+    execute format(
+      'create policy "logados_leem" on public.%I for select to authenticated using (true)', t);
+    execute format(
+      'create policy "logados_escrevem" on public.%I for all to authenticated using (true) with check (true)', t);
+  end loop;
+end $$;
+
+-- =====================================================================
+--  DEPOIS DE RODAR ISTO:
+--  1) Authentication → Providers → Email: deixe ligado e DESLIGUE
+--     "Confirm email" (senão o usuário precisa confirmar por e-mail).
+--  2) Authentication → Users → "Add user" → crie os 2 usuários
+--     com e-mail e senha. Só eles conseguem entrar no app.
+--  3) Abra o app, cole a URL e a chave anon, faça login: os 51
+--     funcionários e os 26 EPIs da planilha entram sozinhos na
+--     primeira vez.
+-- =====================================================================

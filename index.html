@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ficha de EPI · SAKUMA</title>
+<meta name="description" content="Cadastro de funcionários e impressão das fichas de EPI da SAKUMA Agronegócios.">
+<meta name="theme-color" content="#84BD00">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ficha de EPI">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- ============ TELA: CONEXÃO ============ -->
+<section class="centro tela" id="telaConexao" hidden>
+  <div class="caixa">
+    <img src="icons/icon-192.png" alt="">
+    <h1>Conectar ao Supabase</h1>
+    <p class="sub">Cole os dados do seu projeto. Ficam gravados só neste aparelho.</p>
+    <div class="aviso erro" id="erroConexao" hidden></div>
+    <form id="formConexao">
+      <div class="grade">
+        <label class="campo">URL do projeto
+          <input type="text" id="conUrl" placeholder="https://xxxxxxxx.supabase.co" required
+                 inputmode="url" autocomplete="off" spellcheck="false">
+        </label>
+        <label class="campo">Chave anon public
+          <input type="text" id="conChave" placeholder="eyJhbGciOi..." required
+                 autocomplete="off" spellcheck="false">
+        </label>
+      </div>
+      <div class="barra"><button class="btn principal" type="submit">Conectar</button></div>
+    </form>
+    <ol class="passos">
+      <li>Em <code>supabase.com</code>, abra seu projeto.</li>
+      <li>Vá em <b>Project Settings → API</b>.</li>
+      <li>Copie <b>Project URL</b> e a chave <b>anon public</b>.</li>
+      <li>Rode o SQL do arquivo <code>supabase.sql</code> em <b>SQL Editor</b>.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ TELA: LOGIN ============ -->
+<section class="centro tela" id="telaLogin" hidden>
+  <div class="caixa">
+    <img src="icons/icon-192.png" alt="">
+    <h1>Ficha de EPI</h1>
+    <p class="sub">SAKUMA Agronegócios</p>
+    <div class="aviso erro" id="erroLogin" hidden></div>
+    <form id="formLogin">
+      <div class="grade">
+        <label class="campo">E-mail
+          <input type="email" id="logEmail" required autocomplete="username" inputmode="email">
+        </label>
+        <label class="campo">Senha
+          <input type="password" id="logSenha" required autocomplete="current-password">
+        </label>
+      </div>
+      <div class="barra"><button class="btn principal" type="submit" id="btnEntrar">Entrar</button></div>
+    </form>
+    <div class="barra"><button class="btn mini" type="button" id="btnTrocarProjeto">Trocar de projeto Supabase</button></div>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+  <header class="topo">
+    <div class="topo-int">
+      <img src="icons/icon-192.png" alt="">
+      <h1>Ficha de EPI</h1>
+      <span class="cresce"></span>
+      <span class="estado" id="estadoRede"><span class="pt"></span><span id="estadoTexto">online</span></span>
+      <button class="btn mini" id="btnInstalar" hidden>Instalar app</button>
+      <button class="btn mini" id="btnSair">Sair</button>
+    </div>
+    <nav class="abas" role="tablist">
+      <button class="aba" role="tab" data-tela="fichas" aria-selected="true">Fichas</button>
+      <button class="aba" role="tab" data-tela="funcionarios" aria-selected="false">Funcionários</button>
+      <button class="aba" role="tab" data-tela="epis" aria-selected="false">EPIs</button>
+      <button class="aba" role="tab" data-tela="modelo" aria-selected="false">Modelo da ficha</button>
+    </nav>
+  </header>
+
+  <main>
+    <div class="aviso info" id="avisoGlobal" hidden></div>
+
+    <!-- ---- FICHAS ---- -->
+    <section class="tela" id="telaFichas">
+      <div class="cartao naoimprimir">
+        <h2>Cabeçalho da ficha</h2>
+        <p class="dica">Vale para todas as fichas geradas agora.</p>
+        <div class="grade">
+          <label class="campo">Mês <select id="selMes"></select></label>
+          <label class="campo">Ano <input type="number" id="selAno" min="2000" max="2099" step="1"></label>
+          <label class="campo">Setor <input type="text" id="selSetor"></label>
+          <label class="campo">Linhas da tabela <input type="number" id="selLinhas" min="1" max="40" step="1"></label>
+        </div>
+      </div>
+
+      <div class="cartao naoimprimir">
+        <h2>Funcionários</h2>
+        <p class="dica">Cada um marcado vira uma página.</p>
+        <div class="grade larga">
+          <label class="campo">Buscar <input type="text" id="busca" placeholder="Digite o nome..."></label>
+          <label class="campo">Situação
+            <select id="fSit">
+              <option value="ATIVO">Somente ativos</option>
+              <option value="">Todos</option>
+              <option value="INATIVO">Somente inativos</option>
+            </select>
+          </label>
+          <label class="campo">Empregador <select id="fEmp"><option value="">Todos</option></select></label>
+        </div>
+        <div class="barra">
+          <button class="btn" id="bTodos">Marcar todos</button>
+          <button class="btn" id="bNenhum">Desmarcar todos</button>
+          <span class="contagem"><b id="cnt">0</b> selecionado(s)</span>
+        </div>
+        <div class="lista rolagem" id="listaSel" style="margin-top:12px"></div>
+      </div>
+
+      <div class="previa" id="saida"></div>
+
+      <div class="rodape-fixo naoimprimir">
+        <button class="btn principal" id="bImprimir" disabled>Imprimir fichas</button>
+        <button class="btn" id="bSalvarFichas" disabled>Salvar preenchimento</button>
+        <button class="btn" id="bLimparFichas" disabled>Limpar linhas</button>
+        <span class="cresce"></span>
+        <span class="zoom">Zoom
+          <input type="range" id="zoom" min="60" max="180" value="100" step="5">
+          <span id="zoomV">100%</span>
+        </span>
+      </div>
+    </section>
+
+    <!-- ---- FUNCIONÁRIOS ---- -->
+    <section class="tela" id="telaFuncionarios" hidden>
+      <div class="cartao">
+        <div class="barra entre" style="margin:0">
+          <div>
+            <h2 style="margin:0">Cadastro de funcionários</h2>
+            <p class="dica" style="margin:2px 0 0"><span id="cntFunc">0</span> cadastrados</p>
+          </div>
+          <button class="btn principal" id="bNovoFunc">Novo funcionário</button>
+        </div>
+        <div class="grade larga" style="margin-top:14px">
+          <label class="campo">Buscar <input type="text" id="buscaFunc" placeholder="Nome, cargo ou nº"></label>
+          <label class="campo">Situação
+            <select id="fSitFunc">
+              <option value="">Todos</option>
+              <option value="ATIVO">Ativos</option>
+              <option value="INATIVO">Inativos</option>
+            </select>
+          </label>
+        </div>
+        <div class="lista rolagem" id="listaFunc" style="margin-top:12px"></div>
+      </div>
+    </section>
+
+    <!-- ---- EPIS ---- -->
+    <section class="tela" id="telaEpis" hidden>
+      <div class="cartao">
+        <div class="barra entre" style="margin:0">
+          <div>
+            <h2 style="margin:0">Catálogo de EPIs</h2>
+            <p class="dica" style="margin:2px 0 0">Aparece como sugestão ao preencher a ficha.</p>
+          </div>
+          <button class="btn principal" id="bNovoEpi">Novo EPI</button>
+        </div>
+        <label class="campo" style="margin-top:14px">Buscar
+          <input type="text" id="buscaEpi" placeholder="Descrição ou C.A">
+        </label>
+        <div class="lista rolagem" id="listaEpi" style="margin-top:12px"></div>
+      </div>
+    </section>
+
+    <!-- ---- MODELO ---- -->
+    <section class="tela" id="telaModelo" hidden>
+      <form class="cartao" id="formModelo">
+        <h2>Modelo da ficha</h2>
+        <p class="dica">Textos fixos impressos em toda ficha. Vale para os dois usuários.</p>
+        <div class="grade larga">
+          <label class="campo plena">Título
+            <input type="text" id="mTitulo">
+          </label>
+          <label class="campo">Rótulo da coluna FAZ
+            <input type="text" id="mRotuloFaz">
+          </label>
+          <label class="campo">Rótulo da coluna M.E.R
+            <input type="text" id="mRotuloMer">
+          </label>
+          <label class="campo">Legenda FAZ (uma por linha)
+            <textarea id="mLegFaz" rows="4"></textarea>
+          </label>
+          <label class="campo">Legenda M.E.R (uma por linha)
+            <textarea id="mLegMer" rows="4"></textarea>
+          </label>
+          <label class="campo plena">Abertura da declaração
+            <input type="text" id="mDeclTitulo">
+          </label>
+          <label class="campo plena">Itens da declaração (um por linha)
+            <textarea id="mDecls" rows="6"></textarea>
+          </label>
+          <label class="campo plena">Parágrafo final
+            <textarea id="mDeclLonga" rows="5"></textarea>
+          </label>
+          <label class="campo">Rodapé da demissão
+            <input type="text" id="mRodape">
+          </label>
+          <label class="campo">Setor padrão
+            <input type="text" id="mSetor">
+          </label>
+          <label class="campo">Linhas padrão
+            <input type="number" id="mLinhas" min="1" max="40">
+          </label>
+        </div>
+        <div class="barra">
+          <button class="btn principal" type="submit">Salvar modelo</button>
+          <button class="btn" type="button" id="bRestaurarModelo">Restaurar original da planilha</button>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+
+<!-- lista de sugestões de EPI usada dentro da ficha -->
+<datalist id="lista-epis"></datalist>
+
+<!-- ============ DIÁLOGO: FUNCIONÁRIO ============ -->
+<dialog id="dlgFunc">
+  <form method="dialog" id="formFunc">
+    <h3 id="tituloFunc">Novo funcionário</h3>
+    <div class="grade">
+      <label class="campo plena">Nome <input type="text" id="fuNome" required></label>
+      <label class="campo">Nº de cadastro <input type="text" id="fuCadastro"></label>
+      <label class="campo">Admissão <input type="date" id="fuAdmissao"></label>
+      <label class="campo">Cargo <input type="text" id="fuCargo" list="lista-cargos"></label>
+      <label class="campo">Empregador <input type="text" id="fuEmpregador" list="lista-empregadores"></label>
+      <label class="campo">CPF <input type="text" id="fuCpf" inputmode="numeric"></label>
+      <label class="campo">Setor <input type="text" id="fuSetor"></label>
+      <label class="campo">Tam. calçado <input type="text" id="fuCalcado" inputmode="numeric"></label>
+      <label class="campo">Tam. camisa <input type="text" id="fuCamisa"></label>
+      <label class="campo">Situação
+        <select id="fuSituacao"><option>ATIVO</option><option>INATIVO</option></select>
+      </label>
+    </div>
+    <div class="barra entre">
+      <button class="btn perigo" type="button" id="bApagarFunc">Apagar</button>
+      <span>
+        <button class="btn" type="button" data-fechar>Cancelar</button>
+        <button class="btn principal" type="submit">Salvar</button>
+      </span>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ DIÁLOGO: EPI ============ -->
+<dialog id="dlgEpi">
+  <form method="dialog" id="formEpi">
+    <h3 id="tituloEpi">Novo EPI</h3>
+    <div class="grade">
+      <label class="campo plena">Descrição <input type="text" id="epDescricao" required></label>
+      <label class="campo">C.A <input type="text" id="epCa"></label>
+      <label class="campo">Observação <input type="text" id="epObs"></label>
+      <label class="campo plena">Atividade <input type="text" id="epAtividade"></label>
+    </div>
+    <div class="barra entre">
+      <button class="btn perigo" type="button" id="bApagarEpi">Apagar</button>
+      <span>
+        <button class="btn" type="button" data-fechar>Cancelar</button>
+        <button class="btn principal" type="submit">Salvar</button>
+      </span>
+    </div>
+  </form>
+</dialog>
+
+<datalist id="lista-cargos"></datalist>
+<datalist id="lista-empregadores"></datalist>
+
+<script src="vendor/supabase.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
