@@ -15,7 +15,6 @@ let editandoEpi = null;
 
 /* =============== telas =============== */
 function mostrar(qual) {
-  $('telaConexao').hidden = qual !== 'conexao';
   $('telaLogin').hidden = qual !== 'login';
   $('app').hidden = qual !== 'app';
 }
@@ -32,26 +31,7 @@ function abrirAba(nome) {
   if (nome === 'modelo') preencherModelo();
 }
 
-/* =============== conexão e login =============== */
-$('formConexao').addEventListener('submit', async ev => {
-  ev.preventDefault();
-  const erro = $('erroConexao'); erro.hidden = true;
-  const url = $('conUrl').value.trim();
-  if (!/^https:\/\/.+\.supabase\.co\/?$/i.test(url)) {
-    erro.textContent = 'A URL deve ser parecida com https://xxxxxxxx.supabase.co';
-    erro.hidden = false; return;
-  }
-  db.salvarConexao(url, $('conChave').value);
-  const r = await db.iniciar();
-  mostrar(r.etapa === 'app' ? 'app' : 'login');
-  if (r.etapa === 'app') await carregarTudo();
-});
-
-$('btnTrocarProjeto').addEventListener('click', () => {
-  db.apagarConexao();
-  mostrar('conexao');
-});
-
+/* =============== login =============== */
 $('formLogin').addEventListener('submit', async ev => {
   ev.preventDefault();
   const erro = $('erroLogin'); erro.hidden = true;
