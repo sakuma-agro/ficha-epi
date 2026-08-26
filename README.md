@@ -35,29 +35,32 @@ Abra o endereço do app no navegador e:
 
 ---
 
-## Configurar o Supabase (uma vez só)
+## Supabase
 
-1. Crie um projeto em [supabase.com](https://supabase.com).
-2. Abra **SQL Editor → New query**, cole todo o conteúdo de
-   [`supabase.sql`](supabase.sql) e clique em **Run**.
-3. Em **Authentication → Providers → Email**, deixe ligado e **desligue
-   "Confirm email"**.
-4. Em **Authentication → Users → Add user**, crie os usuários que vão
-   usar o app (e-mail e senha). Só eles conseguem entrar.
-5. Em **Project Settings → API**, copie a **Project URL** e a chave
-   **anon public**.
-6. Abra o app, cole os dois valores e faça login.
+O projeto já está configurado e embutido no app — ninguém precisa colar
+nada ao abrir. O que foi feito:
+
+- Projeto `ficha-epi` na organização `sakuma-agro`, região São Paulo.
+- Tabelas, índices e regras de acesso do [`supabase.sql`](supabase.sql).
+- **Cadastro público desligado**: ninguém cria conta sozinho.
+- Confirmação de e-mail desligada, já que só o administrador cria usuários.
+
+### Liberar acesso para alguém
+
+Em **Authentication → Users → Add user → Create new user**, informe
+e-mail e senha e marque **Auto Confirm User**. Só quem estiver nessa
+lista consegue entrar.
 
 Na primeira entrada, os **51 funcionários** e os **26 EPIs** da planilha
 são carregados automaticamente.
 
-### Sobre a chave anon
+### Sobre a chave no código
 
-Ela é feita para ficar visível no navegador — quem protege os dados são as
-regras de acesso (RLS) criadas pelo `supabase.sql`, que só liberam leitura e
-escrita para usuários logados. Um visitante sem login não enxerga nada.
-Por isso ela não fica gravada neste repositório: cada aparelho guarda a sua
-localmente, na primeira configuração.
+A chave gravada em `js/store.js` é a *publishable*, feita para ficar
+visível no navegador. Quem protege os dados são as regras de acesso (RLS)
+do `supabase.sql`, que só liberam leitura e escrita para quem está logado —
+sem login, a chave não enxerga nada. Para apontar o app para outro projeto,
+use **Trocar de projeto Supabase** na tela de login.
 
 ---
 

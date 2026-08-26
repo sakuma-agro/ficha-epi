@@ -1,5 +1,5 @@
 // Service worker: deixa o app abrir e imprimir mesmo sem internet.
-const VERSAO = 'epi-v1';
+const VERSAO = 'epi-v2';
 const ARQUIVOS = [
   './', './index.html', './css/app.css',
   './js/app.js', './js/store.js', './js/ficha.js', './js/seed.js',
