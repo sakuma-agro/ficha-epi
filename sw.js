@@ -1,5 +1,9 @@
 // Service worker: deixa o app abrir e imprimir mesmo sem internet.
-const VERSAO = 'epi-v3';
+//
+// Estratégia: rede primeiro, cache como reserva.
+// Com internet, o app sempre carrega a versão publicada — nunca fica preso
+// numa versão antiga. Sem internet, cai no que estiver guardado.
+const VERSAO = 'epi-v4';
 const ARQUIVOS = [
   './', './index.html', './css/app.css',
   './js/app.js', './js/store.js', './js/ficha.js', './js/seed.js',
@@ -23,20 +27,24 @@ self.addEventListener('activate', ev => {
 self.addEventListener('fetch', ev => {
   const req = ev.request;
   if (req.method !== 'GET') return;
-  const url = new URL(req.url);
-  // chamadas ao Supabase nunca vão para o cache
-  if (url.origin !== self.location.origin) return;
+  // chamadas ao Supabase nunca passam pelo cache
+  if (new URL(req.url).origin !== self.location.origin) return;
 
-  ev.respondWith(
-    caches.match(req).then(guardado => {
-      const rede = fetch(req).then(resp => {
-        if (resp && resp.ok) {
-          const copia = resp.clone();
-          caches.open(VERSAO).then(c => c.put(req, copia));
-        }
-        return resp;
-      }).catch(() => guardado);
-      return guardado || rede;
-    })
-  );
+  ev.respondWith((async () => {
+    const cache = await caches.open(VERSAO);
+    try {
+      const resp = await fetch(req);
+      if (resp && resp.ok) cache.put(req, resp.clone()).catch(() => {});
+      return resp;
+    } catch {
+      const guardado = await cache.match(req, { ignoreSearch: true });
+      if (guardado) return guardado;
+      // navegação sem rede e sem cópia exata: entrega a tela inicial
+      if (req.mode === 'navigate') {
+        const inicial = await cache.match('./index.html');
+        if (inicial) return inicial;
+      }
+      return Response.error();
+    }
+  })());
 });
