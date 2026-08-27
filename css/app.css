@@ -183,15 +183,22 @@ dialog h3{margin:0 0 14px;font-size:16px}
 /* =========================================================
    IMPRESSÃO
    ========================================================= */
-@page{size:A4 portrait;margin:20mm 13mm}
+/* Margem zero na pagina: e o que faz o Chrome parar de imprimir a data, o
+   titulo, a URL e o numero da pagina nas bordas. A folga fica por conta da
+   margem da propria ficha (--imp-margem), e a ficha e ampliada
+   (--imp-escala) para ocupar a largura util do A4. */
+@page{size:A4 portrait;margin:0}
 @media print{
+  :root{--imp-margem:4mm;--imp-escala:1.11}
   body{background:#fff}
-  .topo,.abas,.rodape-fixo,.naoimprimir,dialog{display:none !important}
+  .topo,.abas,.rodape-fixo,.naoimprimir,dialog,.aviso{display:none !important}
   main{padding:0;max-width:none}
   .cartao{display:none}
   .previa{margin:0;gap:0;display:block}
   #saida{transform:none !important}
-  .ficha{box-shadow:none;margin:0 auto;page-break-after:always;break-after:page;
+  .ficha{box-shadow:none;margin:var(--imp-margem) auto;
+    transform:scale(var(--imp-escala));transform-origin:top center;
+    page-break-after:always;break-after:page;
     page-break-inside:avoid;break-inside:avoid}
   .ficha:last-child{page-break-after:auto;break-after:auto}
   .cw .cx{outline:0 !important;background:transparent !important}
