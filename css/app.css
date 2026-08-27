@@ -140,8 +140,9 @@ dialog h3{margin:0 0 14px;font-size:16px}
 /* =========================================================
    FICHA — reprodução da planilha
    ========================================================= */
-.ficha{width:182mm;border:var(--m);background:#fff;color:#000;
-  font-family:Arial,Helvetica,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.16)}
+.folha{width:182mm;background:#fff;color:#000;box-shadow:0 4px 20px rgba(0,0,0,.16)}
+.ficha{width:100%;border:var(--m);background:#fff;color:#000;
+  font-family:Arial,Helvetica,sans-serif}
 .fx{width:100%;border-collapse:collapse;table-layout:fixed}
 .fx td{padding:0 1mm;overflow:hidden;vertical-align:bottom;line-height:1.04}
 
@@ -180,6 +181,14 @@ dialog h3{margin:0 0 14px;font-size:16px}
 .cw.preenchida .ph{display:none}
 .cel.es .cw .cx{text-align:left}
 
+/* faixa de segurança do rodapé (fora da moldura da ficha) */
+.selos{border-top:.7mm solid var(--verde);margin-top:3mm;padding:3mm 4mm 1mm;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:2mm}
+.selo{flex:1;display:flex;flex-direction:column;align-items:center;gap:1.2mm}
+.selo svg{width:9mm;height:9mm;color:var(--verde);display:block}
+.selo span{font-family:Arial,Helvetica,sans-serif;font-size:6.2pt;font-weight:bold;
+  letter-spacing:.3pt;color:#51534A;text-align:center;line-height:1}
+
 /* =========================================================
    IMPRESSÃO
    ========================================================= */
@@ -196,11 +205,13 @@ dialog h3{margin:0 0 14px;font-size:16px}
   .cartao{display:none}
   .previa{margin:0;gap:0;display:block}
   #saida{transform:none !important}
-  .ficha{box-shadow:none;margin:var(--imp-margem) auto;
+  .folha{box-shadow:none;margin:var(--imp-margem) auto;
     transform:scale(var(--imp-escala));transform-origin:top center;
     page-break-after:always;break-after:page;
     page-break-inside:avoid;break-inside:avoid}
-  .ficha:last-child{page-break-after:auto;break-after:auto}
+  .folha:last-child{page-break-after:auto;break-after:auto}
+  .ficha{box-shadow:none}
+  .selos{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cw .cx{outline:0 !important;background:transparent !important}
 }
 
