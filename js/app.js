@@ -90,7 +90,6 @@ function preencherControles() {
     $('selMes').value = hoje.getMonth();
     $('selAno').value = hoje.getFullYear();
   }
-  if (!$('selSetor').value) $('selSetor').value = m.setor_padrao || 'CAMPO';
   if (!$('selLinhas').value) $('selLinhas').value = m.linhas_padrao || 20;
 
   const emps = [...new Set(estado.funcionarios.map(f => f.empregador).filter(Boolean))].sort();
@@ -158,14 +157,13 @@ function atualizarFichas() {
   ['bImprimir', 'bSalvarFichas', 'bLimparFichas'].forEach(id => { $(id).disabled = n === 0; });
 
   const mes = +$('selMes').value, ano = +$('selAno').value || new Date().getFullYear();
-  const setor = $('selSetor').value;
   const qtd = Math.max(1, Math.min(40, parseInt($('selLinhas').value) || 20));
   const modelo = modeloAtual();
   const sel = estado.funcionarios.filter(f => marcados.has(f.id));
 
   $('saida').innerHTML = sel.map(f => {
     const { chave, linhas } = linhasDe(f, mes, ano, qtd);
-    return montarFicha(f, modelo, { mes, ano, setor, linhas, chave });
+    return montarFicha(f, modelo, { mes, ano, linhas, chave });
   }).join('');
 }
 
@@ -208,7 +206,7 @@ $('bSalvarFichas').addEventListener('click', async ev => {
     usadas.add(ch);
     await db.salvarFicha({
       id: r.id, funcionario_id: f.id, mes, ano,
-      setor: $('selSetor').value, linhas,
+      setor: f.setor || modeloAtual().setor_padrao || 'CAMPO', linhas,
     });
   }
   botao.textContent = usadas.size ? 'Salvo' : 'Salvar preenchimento';
@@ -224,7 +222,7 @@ $('bLimparFichas').addEventListener('click', () => {
 });
 
 ['busca', 'fSit', 'fEmp'].forEach(id => $(id).addEventListener('input', desenharSelecao));
-['selMes', 'selAno', 'selSetor', 'selLinhas'].forEach(id => $(id).addEventListener('input', atualizarFichas));
+['selMes', 'selAno', 'selLinhas'].forEach(id => $(id).addEventListener('input', atualizarFichas));
 $('bTodos').addEventListener('click', () => { visiveis().forEach(f => marcados.add(f.id)); desenharSelecao(); });
 $('bNenhum').addEventListener('click', () => { marcados.clear(); desenharSelecao(); });
 $('bImprimir').addEventListener('click', () => window.print());
