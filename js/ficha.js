@@ -12,6 +12,34 @@ export const TRACO = '_____/_____/_______';
 export const linhaVazia = () =>
   ({ faz: '', data: '', qtd: '', ca: '', descricao: '', devolucao: '', assinatura: '', mer: '' });
 
+/* Faixa de seguranca do rodape: cinco selos desenhados em vetor (SVG), no
+   verde da marca. Sao arte fixa da ficha, nao texto do modelo. */
+const SELOS = [
+  ['SEGURANÇA',
+    '<path d="M12 3.2 19.4 6.1v6c0 4.5-3.1 7.6-7.4 8.7-4.3-1.1-7.4-4.2-7.4-8.7v-6z"/>' +
+    '<path d="m8.7 12.2 2.4 2.4 4.2-4.6"/>'],
+  ['OBSERVE',
+    '<path d="M2.6 12S6.2 5.9 12 5.9 21.4 12 21.4 12 17.8 18.1 12 18.1 2.6 12 2.6 12z"/>' +
+    '<circle cx="12" cy="12" r="3.1"/>'],
+  ['PARE',
+    '<path d="M8.2 13.4V6.2a1.4 1.4 0 0 1 2.8 0v5.4"/>' +
+    '<path d="M11 11.6V5a1.4 1.4 0 0 1 2.8 0v6.6"/>' +
+    '<path d="M13.8 11.6V6a1.4 1.4 0 0 1 2.8 0v5.6"/>' +
+    '<path d="M16.6 10.2a1.4 1.4 0 0 1 2.8 0v4.2c0 3.6-2.5 6.4-6.2 6.4h-.9c-1.7 0-2.8-.7-3.8-2l-3.2-4.4a1.5 1.5 0 0 1 2.4-1.8l1.6 2"/>'],
+  ['COMUNIQUE',
+    '<path d="M20.4 4.6H3.6v10.6h4.2v4.2l4.6-4.2h8z"/>' +
+    '<path d="M12 7.4v3.6"/><path d="M12 12.9v.1"/>'],
+  ['VOLTE BEM',
+    '<path d="M3.4 10.6 12 3.4l8.6 7.2v8.2a1.4 1.4 0 0 1-1.4 1.4H4.8a1.4 1.4 0 0 1-1.4-1.4z"/>' +
+    '<path d="M12 18.1s-2.7-1.8-2.7-3.5a1.5 1.5 0 0 1 2.7-.9 1.5 1.5 0 0 1 2.7.9c0 1.7-2.7 3.5-2.7 3.5z"/>'],
+];
+
+const FAIXA_SELOS = '<div class="selos" aria-hidden="true">' +
+  SELOS.map(([nome, desenho]) =>
+    '<div class="selo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + desenho + '</svg>' +
+    `<span>${nome}</span></div>`).join('') + '</div>';
+
 const esc = s => String(s == null ? '' : s)
   .replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -49,7 +77,8 @@ export function montarFicha(func, modelo, opcoes) {
     celula('mer', i, l.mer, 'f10 ce blt btt bbt') +
     '</tr>';
 
-  return `<div class="ficha" data-chave="${esc(chave)}">
+  return `<div class="folha">
+  <div class="ficha" data-chave="${esc(chave)}">
   <table class="fx"><colgroup>
     <col style="width:4.729%"><col style="width:13.997%"><col style="width:5.296%"><col style="width:9.269%">
     <col style="width:22.005%"><col style="width:13.997%"><col style="width:22.131%"><col style="width:8.575%">
@@ -123,5 +152,7 @@ export function montarFicha(func, modelo, opcoes) {
     <td class="f12 b ce vm btm blt bbt">M.E.R</td>
   </tr>
   ${linhas.map(linhaHtml).join('')}
-  </tbody></table></div>`;
+  </tbody></table></div>
+  ${FAIXA_SELOS}
+</div>`;
 }
