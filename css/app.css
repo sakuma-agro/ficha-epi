@@ -243,6 +243,10 @@ dialog h3{margin:0 0 14px;font-size:16px}
 .an-nome{font-weight:bold;color:#51534A}
 .an-apelido{font-weight:normal;color:#7d8175}
 .an-vazio{text-align:center;color:#7d8175;padding:10mm 0;white-space:normal}
+.an-saudacao{margin-top:10mm;border:.5mm solid #84BD00;border-radius:2mm;
+  padding:6mm 8mm;text-align:center}
+.an-saudacao strong{display:block;font-size:13pt;color:#744F28;letter-spacing:.8pt}
+.an-saudacao p{margin:3mm 0 0;font-size:11.5pt;color:#51534A;line-height:1.4}
 .an-pe{margin-top:auto;padding-top:5mm;border-top:.3mm solid #dfe2d8;
   display:flex;justify-content:space-between;font-size:9pt;color:#7d8175}
 
