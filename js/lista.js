@@ -46,9 +46,12 @@ const txt = (x, base, pt, conteudo, extra = '') => {
   return `<div class="lp-t" style="left:${X(x)}mm;top:${(base - alt * 0.8).toFixed(2)}mm;` +
     `font-size:${pt}pt;${extra}">${conteudo}</div>`;
 };
-// traço horizontal
+// Traço horizontal. É desenhado como BORDA, não como fundo: o Chrome só imprime
+// cor de fundo se a opção "Gráficos de plano de fundo" estiver marcada, e sem
+// ela as linhas de preencher à mão sumiam da folha.
 const reg = (x1, x2, y, esp = 0.18) =>
-  `<div class="lp-r" style="left:${X(x1)}mm;top:${y}mm;width:${L(x1, x2)}mm;height:${esp}mm"></div>`;
+  `<div class="lp-r" style="left:${X(x1)}mm;top:${y}mm;width:${L(x1, x2)}mm;` +
+  `border-top-width:${esp}mm"></div>`;
 
 /* ---------- cabeçalho (moldura de cima) ---------- */
 function cabecalho(cfg, pagina, total) {
