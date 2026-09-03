@@ -3,7 +3,13 @@
 import { LOGO } from './seed.js';
 import { MESES } from './ficha.js';
 
-const LINHAS_POR_FOLHA = 22;
+// 15 cabem na folha junto com o recado de parabéns (que sai na última).
+const LINHAS_POR_FOLHA = 15;
+
+// Recado de parabéns. Sai na folha impressa e na mensagem do WhatsApp.
+export const SAUDACAO_TITULO = 'FELIZ ANIVERSÁRIO!';
+export const SAUDACAO = 'Desejamos que seu novo ciclo seja repleto de saúde, ' +
+  'felicidade, realizações e muito sucesso.';
 
 const esc = s => String(s == null ? '' : s)
   .replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -60,6 +66,10 @@ export function montarAniversarios(lista, mes, ano) {
         <thead><tr><th>DIA</th><th>NOME</th></tr></thead>
         <tbody>${linhas}</tbody>
       </table>
+      ${lista.length && p === total - 1 ? `<div class="an-saudacao">
+        <strong>${SAUDACAO_TITULO}</strong>
+        <p>${SAUDACAO}</p>
+      </div>` : ''}
       <div class="an-pe">
         <span>${lista.length} aniversariante(s) em ${MESES[mes]}</span>
         <span>Guilherme Lopes${total > 1 ? ` · folha ${p + 1} de ${total}` : ''}</span>
@@ -72,12 +82,13 @@ export function montarAniversarios(lista, mes, ano) {
 /* ---------------- WhatsApp ---------------- */
 /** Texto para mandar no grupo. O WhatsApp usa *asterisco* para negrito. */
 export function textoWhatsapp(lista, mes, ano) {
-  const cabeca = `*Aniversariantes de ${MESES[mes]} de ${ano}*`;
+  const cabeca = `🎉 *Aniversariantes do mês de ${MESES[mes]}*`;
   if (!lista.length) return `${cabeca}\n\nNinguém faz aniversário neste mês.`;
   const linhas = lista.map(a =>
     `${String(a.dia).padStart(2, '0')}/${String(mes + 1).padStart(2, '0')} - ` +
     (a.apelido ? `${a.nome} (${a.apelido})` : a.nome));
-  return `${cabeca}\n\n${linhas.join('\n')}\n\nSAKUMA Agronegócios`;
+  return `${cabeca}\n\n${linhas.join('\n')}\n\n` +
+    `*Feliz aniversário!* ${SAUDACAO}\n\nSAKUMA Agronegócios`;
 }
 
 /** Abre o WhatsApp já com o texto pronto; a conversa quem escolhe é ele. */
