@@ -2,13 +2,15 @@
 import * as db from './store.js';
 import { estado, modeloAtual } from './store.js';
 import { montarFicha, linhaVazia, MESES, TRACO } from './ficha.js';
+import { montarLista, listaAtual, LISTA_PADRAO } from './lista.js';
 import { SEED_MODELO } from './seed.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s)
   .replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const marcados = new Set();     // ids de funcionários selecionados
+const marcados = new Set();     // ids de funcionários selecionados (fichas)
+const naLista = new Set();      // ids de funcionários na lista de presença
 const rascunhos = new Map();    // chave -> {linhas:[], id}
 let editandoFunc = null;
 let editandoEpi = null;
@@ -23,9 +25,11 @@ function abrirAba(nome) {
   document.querySelectorAll('.aba').forEach(b =>
     b.setAttribute('aria-selected', String(b.dataset.tela === nome)));
   $('telaFichas').hidden = nome !== 'fichas';
+  $('telaLista').hidden = nome !== 'lista';
   $('telaFuncionarios').hidden = nome !== 'funcionarios';
   $('telaEpis').hidden = nome !== 'epis';
   $('telaModelo').hidden = nome !== 'modelo';
+  if (nome === 'lista') { preencherLista(); desenharSelecaoLista(); }
   if (nome === 'funcionarios') desenharFuncionarios();
   if (nome === 'epis') desenharEpis();
   if (nome === 'modelo') preencherModelo();
@@ -93,8 +97,9 @@ function preencherControles() {
   if (!$('selLinhas').value) $('selLinhas').value = m.linhas_padrao || 20;
 
   const emps = [...new Set(estado.funcionarios.map(f => f.empregador).filter(Boolean))].sort();
-  $('fEmp').innerHTML = '<option value="">Todos</option>' +
-    emps.map(e => `<option>${esc(e)}</option>`).join('');
+  const opcoes = '<option value="">Todos</option>' + emps.map(e => `<option>${esc(e)}</option>`).join('');
+  $('fEmp').innerHTML = opcoes;
+  $('fEmpLista').innerHTML = opcoes;
   $('lista-empregadores').innerHTML =
     [...new Set([...(m.empregadores || []), ...emps])].map(e => `<option value="${esc(e)}">`).join('');
   const cargos = [...new Set([...(m.cargos || []), ...estado.funcionarios.map(f => f.cargo).filter(Boolean)])].sort();
@@ -233,6 +238,108 @@ $('zoom').addEventListener('input', () => {
   $('saida').style.transformOrigin = 'top center';
 });
 
+/* =============== aba LISTA DE PRESENÇA =============== */
+function preencherLista() {
+  const c = listaAtual(modeloAtual());
+  $('lpTitulo').value = c.titulo || '';
+  $('lpCodigo').value = c.codigo || '';
+  $('lpData').value = c.data || '';
+  $('lpRevisao').value = c.revisao || '';
+  $('lpElaboracao').value = c.elaboracao || '';
+  $('lpAprovacao').value = c.aprovacao || '';
+}
+
+function visiveisLista() {
+  const q = $('buscaLista').value.trim().toLowerCase();
+  const s = $('fSitLista').value, e = $('fEmpLista').value;
+  return estado.funcionarios.filter(f =>
+    (!q || f.nome.toLowerCase().includes(q)) &&
+    (!s || f.situacao === s) &&
+    (!e || f.empregador === e));
+}
+
+function desenharSelecaoLista() {
+  const vs = visiveisLista(), box = $('listaSelLista');
+  box.innerHTML = vs.length ? vs.map(f => `
+    <label class="item" for="l_${f.id}">
+      <input type="checkbox" id="l_${f.id}" data-id="${f.id}" ${naLista.has(f.id) ? 'checked' : ''}>
+      <span>
+        <span class="nome">${esc(f.nome)}</span><br>
+        <span class="sub">${esc(f.cargo || '—')} · ${esc(f.empregador || '—')}</span>
+      </span>
+      <span class="tag ${f.situacao === 'ATIVO' ? 'ativo' : 'inativo'}">${esc(f.situacao || '—')}</span>
+    </label>`).join('')
+    : '<div class="vazio">Nenhum funcionário encontrado.</div>';
+
+  box.querySelectorAll('input[type=checkbox]').forEach(cb =>
+    cb.addEventListener('change', () => {
+      cb.checked ? naLista.add(cb.dataset.id) : naLista.delete(cb.dataset.id);
+      atualizarLista();
+    }));
+  atualizarLista();
+}
+
+// o que está digitado no cabeçalho agora (aparece na prévia antes de salvar)
+const cabecalhoLista = () => ({
+  ...listaAtual(modeloAtual()),
+  titulo: $('lpTitulo').value,
+  codigo: $('lpCodigo').value,
+  data: $('lpData').value,
+  revisao: $('lpRevisao').value,
+  elaboracao: $('lpElaboracao').value,
+  aprovacao: $('lpAprovacao').value,
+});
+
+function atualizarLista() {
+  const gente = estado.funcionarios.filter(f => naLista.has(f.id));
+  $('cntLista').textContent = gente.length;
+  $('saidaLista').innerHTML = montarLista(gente, cabecalhoLista());
+  $('cntFolhas').textContent = $('saidaLista').children.length;
+}
+
+['lpTitulo', 'lpCodigo', 'lpData', 'lpRevisao', 'lpElaboracao', 'lpAprovacao']
+  .forEach(id => $(id).addEventListener('input', atualizarLista));
+
+['buscaLista', 'fSitLista', 'fEmpLista'].forEach(id =>
+  $(id).addEventListener('input', desenharSelecaoLista));
+$('bTodosLista').addEventListener('click', ev => {
+  ev.preventDefault();
+  visiveisLista().forEach(f => naLista.add(f.id));
+  desenharSelecaoLista();
+});
+$('bNenhumLista').addEventListener('click', ev => {
+  ev.preventDefault();
+  naLista.clear();
+  desenharSelecaoLista();
+});
+$('bImprimirLista').addEventListener('click', () => window.print());
+$('zoomLista').addEventListener('input', () => {
+  const z = $('zoomLista').value;
+  $('zoomVLista').textContent = z + '%';
+  $('saidaLista').style.transform = `scale(${z / 100})`;
+  $('saidaLista').style.transformOrigin = 'top center';
+});
+
+$('formLista').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const c = cabecalhoLista();
+  await db.salvarModelo({
+    ...modeloAtual(),
+    lista: {
+      titulo: c.titulo.trim(), codigo: c.codigo.trim(), data: c.data.trim(),
+      revisao: c.revisao.trim(), elaboracao: c.elaboracao.trim(), aprovacao: c.aprovacao.trim(),
+    },
+  });
+  atualizarLista();
+  const b = ev.submitter; if (b) { b.textContent = 'Salvo'; setTimeout(() => b.textContent = 'Salvar cabeçalho', 1600); }
+});
+
+$('bRestaurarLista').addEventListener('click', async () => {
+  if (!confirm('Voltar os textos do cabeçalho ao original do formulário?')) return;
+  await db.salvarModelo({ ...modeloAtual(), lista: { ...LISTA_PADRAO } });
+  preencherLista(); atualizarLista();
+});
+
 /* =============== aba FUNCIONÁRIOS =============== */
 function desenharFuncionarios() {
   const q = $('buscaFunc').value.trim().toLowerCase();
@@ -308,6 +415,7 @@ $('bApagarFunc').addEventListener('click', async () => {
   if (!confirm(`Apagar ${editandoFunc.nome}? As fichas salvas dele também saem.`)) return;
   await db.apagarFuncionario(editandoFunc.id);
   marcados.delete(editandoFunc.id);
+  naLista.delete(editandoFunc.id);
   $('dlgFunc').close();
   desenharFuncionarios(); desenharSelecao();
 });
