@@ -222,6 +222,42 @@ dialog h3{margin:0 0 14px;font-size:16px}
   color:var(--suave);font-size:13px}
 
 /* =========================================================
+   ANIVERSARIANTES — folha A4 no padrão SAKUMA
+   ========================================================= */
+.an-folha{position:relative;width:210mm;height:296.8mm;overflow:hidden;background:#fff;color:#51534A;
+  box-shadow:0 4px 20px rgba(0,0,0,.16);padding:14mm 10mm 12mm;
+  font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column}
+.an-topo{display:flex;align-items:center;gap:8mm;border-bottom:1.2mm solid #84BD00;padding-bottom:5mm}
+.an-topo img{height:24mm;width:auto;display:block}
+.an-tit h1{margin:0;font-size:17pt;font-weight:bold;color:#744F28;letter-spacing:.4pt}
+.an-tit p{margin:2mm 0 0;font-size:10.5pt;color:#51534A}
+.an-tab{width:100%;border-collapse:collapse;margin-top:7mm;table-layout:fixed}
+.an-tab th{background:#84BD00;color:#fff;font-size:10pt;font-weight:bold;letter-spacing:.4pt;
+  padding:3mm 2.5mm;text-align:left;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.an-tab td{font-size:11pt;padding:2.6mm 2.5mm;border-bottom:.2mm solid #dfe2d8;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.an-tab tbody tr:nth-child(even) td{background:rgba(132,189,0,.07);
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.an-tab th:first-child,.an-tab .an-dia{text-align:center;font-weight:bold;color:#744F28}
+.an-tab th:last-child,.an-tab .an-idade{text-align:center}
+.an-nome{font-weight:bold;color:#51534A}
+.an-apelido{font-weight:normal;color:#7d8175}
+.an-vazio{text-align:center;color:#7d8175;padding:10mm 0;white-space:normal}
+.an-pe{margin-top:auto;padding-top:5mm;border-top:.3mm solid #dfe2d8;
+  display:flex;justify-content:space-between;font-size:9pt;color:#7d8175}
+
+/* prévia da importação */
+.imp-grupo{margin-bottom:14px}
+.imp-grupo h4{margin:0 0 6px;font-size:13px}
+.imp-grupo .cx{max-height:190px;overflow:auto;border:1px solid var(--linha);border-radius:8px}
+.imp-linha{padding:7px 10px;border-bottom:1px solid var(--linha);font-size:12.5px}
+.imp-linha:last-child{border-bottom:none}
+.imp-linha b{font-weight:600}
+.imp-linha .sub{display:block;font-size:11px;color:var(--suave)}
+.imp-nada{padding:16px;text-align:center;color:var(--suave);font-size:12.5px}
+
+/* =========================================================
    IMPRESSÃO
    ========================================================= */
 /* Margem zero na pagina: e o que faz o Chrome parar de imprimir a data, o
@@ -249,6 +285,11 @@ dialog h3{margin:0 0 14px;font-size:16px}
     page-break-after:always;break-after:page;
     page-break-inside:avoid;break-inside:avoid}
   .lp-folha:last-child{page-break-after:auto;break-after:auto}
+  #saidaAniversarios{transform:none !important}
+  .an-folha{box-shadow:none;margin:0;
+    page-break-after:always;break-after:page;
+    page-break-inside:avoid;break-inside:avoid}
+  .an-folha:last-child{page-break-after:auto;break-after:auto}
   .selos{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cw .cx{outline:0 !important;background:transparent !important}
 }
