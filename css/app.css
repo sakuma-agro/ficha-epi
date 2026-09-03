@@ -190,6 +190,38 @@ dialog h3{margin:0 0 14px;font-size:16px}
   letter-spacing:.3pt;color:#51534A;text-align:center;line-height:1}
 
 /* =========================================================
+   LISTA DE PRESENÇA — reprodução do FORMAGR-018 (Word)
+   Folha A4 retrato inteira; as peças são posicionadas em mm,
+   nas mesmas medidas do PDF gerado pelo Word.
+   ========================================================= */
+.lp-folha{position:relative;width:210mm;height:296.8mm;overflow:hidden;
+  background:#fff;color:#000;box-shadow:0 4px 20px rgba(0,0,0,.16);
+  font-family:Calibri,"Segoe UI",Carlito,Arial,sans-serif}
+.lp-t{position:absolute;line-height:1;white-space:nowrap}
+.lp-r{position:absolute;background:#000}
+.lp-sub{text-decoration:underline}
+
+.lp-cab,.lp-tab{position:absolute;border-collapse:collapse;table-layout:fixed}
+.lp-cab td,.lp-tab td{border:0.5pt solid #000;padding:0 1mm;text-align:center;
+  vertical-align:middle;overflow:hidden}
+.lp-cab td{font-size:12pt}
+.lp-cab .lp-esq{text-align:left;padding-left:2mm}
+.lp-cab .lp-rot{line-height:1.15}
+.lp-cab .lp-logo{padding:0;border-right:0.5pt solid #000}
+.lp-cab .lp-logo img{display:block;margin:0 auto;height:30mm;width:auto}
+.lp-cab .lp-titulo{font-size:18pt;font-weight:bold;letter-spacing:.2pt}
+
+.lp-tab td{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:1.1}
+.lp-tab .lp-th td{font-family:Calibri,"Segoe UI",Carlito,Arial,sans-serif;
+  font-size:11pt;font-weight:bold;background:#B8CCE3;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.lp-faixa{position:absolute;line-height:1;font-size:12pt;text-align:center;white-space:nowrap}
+
+.previa-lista{margin-top:20px;display:flex;flex-direction:column;align-items:center;gap:22px}
+.previa-lista:empty::after{content:"Marque quem vai assinar para ver a lista aqui.";
+  color:var(--suave);font-size:13px}
+
+/* =========================================================
    IMPRESSÃO
    ========================================================= */
 /* Margem zero na pagina: e o que faz o Chrome parar de imprimir a data, o
@@ -211,6 +243,12 @@ dialog h3{margin:0 0 14px;font-size:16px}
     page-break-inside:avoid;break-inside:avoid}
   .folha:last-child{page-break-after:auto;break-after:auto}
   .ficha{box-shadow:none}
+  .previa-lista{margin:0;gap:0;display:block}
+  #saidaLista{transform:none !important}
+  .lp-folha{box-shadow:none;margin:0;
+    page-break-after:always;break-after:page;
+    page-break-inside:avoid;break-inside:avoid}
+  .lp-folha:last-child{page-break-after:auto;break-after:auto}
   .selos{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cw .cx{outline:0 !important;background:transparent !important}
 }
