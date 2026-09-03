@@ -72,7 +72,7 @@ export function montarAniversarios(lista, mes, ano) {
       </div>` : ''}
       <div class="an-pe">
         <span>${lista.length} aniversariante(s) em ${MESES[mes]}</span>
-        <span>Guilherme Lopes${total > 1 ? ` · folha ${p + 1} de ${total}` : ''}</span>
+        <span>${total > 1 ? `folha ${p + 1} de ${total}` : ''}</span>
       </div>
     </div>`);
   }
@@ -218,9 +218,6 @@ function desenhar(marca, lista, mes, ano) {
   g.fillStyle = CORES.suave;
   g.font = '24px Arial, Helvetica, sans-serif';
   g.fillText('SAKUMA Agronegócios', m, A - 34);
-  g.textAlign = 'right';
-  g.fillText('Guilherme Lopes', L - m, A - 34);
-  g.textAlign = 'left';
 
   return new Promise(pronto => tela.toBlob(pronto, 'image/png'));
 }
