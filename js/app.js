@@ -4,7 +4,8 @@ import { estado, modeloAtual } from './store.js';
 import { montarFicha, linhaVazia, MESES, TRACO } from './ficha.js';
 import { montarLista, listaAtual, LISTA_PADRAO } from './lista.js';
 import { lerFuncionarios, comparar, aplicarEm } from './planilha.js';
-import { aniversariantes, semNascimento, montarAniversarios, textoWhatsapp, linkWhatsapp } from './aniversarios.js';
+import { aniversariantes, semNascimento, montarAniversarios, textoWhatsapp, linkWhatsapp,
+  imagemAniversarios, nomeImagem } from './aniversarios.js';
 import { SEED_MODELO } from './seed.js';
 
 const $ = id => document.getElementById(id);
@@ -571,9 +572,49 @@ $('zoomAniv').addEventListener('input', () => {
   $('saidaAniversarios').style.transformOrigin = 'top center';
 });
 
-$('bWhatsapp').addEventListener('click', () => {
+function baixar(blob, nome) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/* Manda a imagem do mês junto com o texto. O link do wa.me só carrega texto,
+   então o caminho bom é o compartilhamento do próprio aparelho
+   (navigator.share); onde ele não existe, a imagem é baixada e o WhatsApp abre
+   com o texto para ele anexar. */
+$('bWhatsapp').addEventListener('click', async ev => {
+  const botao = ev.currentTarget;
   const { mes, ano, gente } = listaAniversarios();
-  window.open(linkWhatsapp(textoWhatsapp(gente, mes, ano)), '_blank', 'noopener');
+  const texto = textoWhatsapp(gente, mes, ano);
+  botao.disabled = true; botao.textContent = 'Preparando...';
+  try {
+    const png = await imagemAniversarios(gente, mes, ano);
+    const arquivo = new File([png], nomeImagem(mes, ano), { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+      await navigator.share({ files: [arquivo], text: texto });
+    } else {
+      baixar(png, arquivo.name);
+      window.open(linkWhatsapp(texto), '_blank', 'noopener');
+      mostrarAviso('A imagem foi baixada. No WhatsApp que abriu, anexe o arquivo ' +
+        arquivo.name + ' junto com o texto.');
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;          // ele fechou o compartilhamento
+    window.open(linkWhatsapp(texto), '_blank', 'noopener');
+  } finally {
+    botao.disabled = false; botao.textContent = 'Enviar no WhatsApp';
+  }
+});
+
+$('bBaixarAniv').addEventListener('click', async ev => {
+  const botao = ev.currentTarget;
+  const { mes, ano, gente } = listaAniversarios();
+  botao.disabled = true;
+  try {
+    baixar(await imagemAniversarios(gente, mes, ano), nomeImagem(mes, ano));
+  } finally { botao.disabled = false; }
 });
 
 $('bCopiarAniv').addEventListener('click', async ev => {

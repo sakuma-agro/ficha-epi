@@ -93,3 +93,137 @@ export function textoWhatsapp(lista, mes, ano) {
 
 /** Abre o WhatsApp já com o texto pronto; a conversa quem escolhe é ele. */
 export const linkWhatsapp = texto => `https://wa.me/?text=${encodeURIComponent(texto)}`;
+
+/* ---------------- imagem para mandar no WhatsApp ----------------
+   O link do wa.me só leva texto: não existe jeito de anexar arquivo por URL.
+   Então a folha é redesenhada em um canvas e vira um PNG, que sai junto com o
+   texto pelo compartilhamento do próprio Windows/Android (navigator.share).  */
+const CORES = {
+  verde: '#84BD00', marrom: '#744F28', cinza: '#51534A',
+  suave: '#7d8175', linha: '#dfe2d8', faixa: '#f3f8e8',
+};
+
+/** Quebra o texto em linhas que cabem na largura pedida. */
+function quebrar(g, texto, largura) {
+  const linhas = [];
+  let atual = '';
+  for (const p of texto.split(' ')) {
+    const teste = atual ? `${atual} ${p}` : p;
+    if (g.measureText(teste).width > largura && atual) { linhas.push(atual); atual = p; }
+    else atual = teste;
+  }
+  if (atual) linhas.push(atual);
+  return linhas;
+}
+
+/**
+ * Desenha a folha do mês e devolve um PNG (Blob).
+ * Mesmas cores e mesma ordem da versão impressa.
+ */
+export function imagemAniversarios(lista, mes, ano) {
+  return new Promise(pronto => {
+    const marca = new Image();
+    marca.onload = () => pronto(desenhar(marca, lista, mes, ano));
+    marca.onerror = () => pronto(desenhar(null, lista, mes, ano));
+    marca.src = LOGO;
+  });
+}
+
+function desenhar(marca, lista, mes, ano) {
+  const L = 1080, m = 64;                       // largura e margem
+  const hTopo = 250, hTh = 78, hLin = 74;
+  const temRecado = lista.length > 0;
+  const alturaRecado = temRecado ? 250 : 0;
+  const A = hTopo + hTh + Math.max(lista.length, 1) * hLin + alturaRecado + 130;
+
+  const tela = document.createElement('canvas');
+  tela.width = L; tela.height = A;
+  const g = tela.getContext('2d');
+  g.textBaseline = 'alphabetic';
+  g.fillStyle = '#fff'; g.fillRect(0, 0, L, A);
+
+  // marca + título
+  if (marca) {
+    const h = 130, w = h * (marca.naturalWidth / marca.naturalHeight);
+    g.drawImage(marca, m, 52, w, h);
+  }
+  const xTit = m + 170;
+  g.fillStyle = CORES.marrom;
+  g.font = 'bold 42px Arial, Helvetica, sans-serif';
+  g.fillText(`ANIVERSARIANTES DE ${MESES[mes].toUpperCase()}`, xTit, 118);
+  g.fillStyle = CORES.cinza;
+  g.font = '26px Arial, Helvetica, sans-serif';
+  g.fillText(`${ano} · SAKUMA Agronegócios`, xTit, 160);
+  g.fillStyle = CORES.verde;
+  g.fillRect(m, 200, L - 2 * m, 6);
+
+  // cabeçalho da tabela
+  let y = hTopo;
+  g.fillStyle = CORES.verde;
+  g.fillRect(m, y, L - 2 * m, hTh);
+  g.fillStyle = '#fff';
+  g.font = 'bold 26px Arial, Helvetica, sans-serif';
+  g.fillText('DIA', m + 26, y + 50);
+  g.fillText('NOME', m + 150, y + 50);
+  y += hTh;
+
+  // linhas
+  if (!lista.length) {
+    g.fillStyle = CORES.suave;
+    g.font = '28px Arial, Helvetica, sans-serif';
+    g.fillText('Nenhum aniversariante neste mês.', m + 26, y + 46);
+    y += hLin;
+  }
+  lista.forEach((a, i) => {
+    if (i % 2 === 1) { g.fillStyle = CORES.faixa; g.fillRect(m, y, L - 2 * m, hLin); }
+    g.fillStyle = CORES.linha;
+    g.fillRect(m, y + hLin - 1, L - 2 * m, 1);
+    g.fillStyle = CORES.marrom;
+    g.font = 'bold 30px Arial, Helvetica, sans-serif';
+    g.fillText(String(a.dia).padStart(2, '0'), m + 26, y + 48);
+    g.fillStyle = CORES.cinza;
+    g.font = 'bold 30px Arial, Helvetica, sans-serif';
+    g.fillText(a.nome, m + 150, y + 48);
+    if (a.apelido) {
+      const larg = g.measureText(a.nome).width;
+      g.fillStyle = CORES.suave;
+      g.font = '30px Arial, Helvetica, sans-serif';
+      g.fillText(` (${a.apelido})`, m + 150 + larg, y + 48);
+    }
+    y += hLin;
+  });
+
+  // recado de parabéns
+  if (temRecado) {
+    y += 56;
+    const alt = 170;
+    g.strokeStyle = CORES.verde; g.lineWidth = 4;
+    g.strokeRect(m + 2, y, L - 2 * m - 4, alt);
+    g.textAlign = 'center';
+    g.fillStyle = CORES.marrom;
+    g.font = 'bold 32px Arial, Helvetica, sans-serif';
+    g.fillText(SAUDACAO_TITULO, L / 2, y + 62);
+    g.fillStyle = CORES.cinza;
+    g.font = '27px Arial, Helvetica, sans-serif';
+    quebrar(g, SAUDACAO, L - 2 * m - 90).forEach((linha, i) => {
+      g.fillText(linha, L / 2, y + 110 + i * 38);
+    });
+    g.textAlign = 'left';
+    y += alt;
+  }
+
+  // rodapé
+  g.fillStyle = CORES.linha;
+  g.fillRect(m, A - 74, L - 2 * m, 1);
+  g.fillStyle = CORES.suave;
+  g.font = '24px Arial, Helvetica, sans-serif';
+  g.fillText('SAKUMA Agronegócios', m, A - 34);
+  g.textAlign = 'right';
+  g.fillText('Guilherme Lopes', L - m, A - 34);
+  g.textAlign = 'left';
+
+  return new Promise(pronto => tela.toBlob(pronto, 'image/png'));
+}
+
+/** Nome do arquivo da imagem do mês. */
+export const nomeImagem = (mes, ano) => `aniversariantes-${MESES[mes]}-${ano}.png`;
