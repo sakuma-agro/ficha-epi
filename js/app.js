@@ -3,6 +3,8 @@ import * as db from './store.js';
 import { estado, modeloAtual } from './store.js';
 import { montarFicha, linhaVazia, MESES, TRACO } from './ficha.js';
 import { montarLista, listaAtual, LISTA_PADRAO } from './lista.js';
+import { lerFuncionarios, comparar, aplicarEm } from './planilha.js';
+import { aniversariantes, semNascimento, montarAniversarios, textoWhatsapp, linkWhatsapp } from './aniversarios.js';
 import { SEED_MODELO } from './seed.js';
 
 const $ = id => document.getElementById(id);
@@ -27,9 +29,11 @@ function abrirAba(nome) {
   $('telaFichas').hidden = nome !== 'fichas';
   $('telaLista').hidden = nome !== 'lista';
   $('telaFuncionarios').hidden = nome !== 'funcionarios';
+  $('telaAniversarios').hidden = nome !== 'aniversarios';
   $('telaEpis').hidden = nome !== 'epis';
   $('telaModelo').hidden = nome !== 'modelo';
   if (nome === 'lista') { preencherLista(); desenharSelecaoLista(); }
+  if (nome === 'aniversarios') atualizarAniversarios();
   if (nome === 'funcionarios') desenharFuncionarios();
   if (nome === 'epis') desenharEpis();
   if (nome === 'modelo') preencherModelo();
@@ -104,6 +108,18 @@ function preencherControles() {
     [...new Set([...(m.empregadores || []), ...emps])].map(e => `<option value="${esc(e)}">`).join('');
   const cargos = [...new Set([...(m.cargos || []), ...estado.funcionarios.map(f => f.cargo).filter(Boolean)])].sort();
   $('lista-cargos').innerHTML = cargos.map(c => `<option value="${esc(c)}">`).join('');
+  const fazendas = [...new Set(estado.funcionarios.map(f => f.fazenda).filter(Boolean))].sort();
+  $('lista-fazendas').innerHTML = fazendas.map(f => `<option value="${esc(f)}">`).join('');
+  if (!$('anMes').options.length) {
+    MESES.forEach((nome, i) => {
+      const o = document.createElement('option');
+      o.value = i; o.textContent = nome[0].toUpperCase() + nome.slice(1);
+      $('anMes').appendChild(o);
+    });
+    const hoje = new Date();
+    $('anMes').value = hoje.getMonth();
+    $('anAno').value = hoje.getFullYear();
+  }
   $('lista-epis').innerHTML = estado.epis.filter(e => e.ativo !== false)
     .map(e => `<option value="${esc(e.descricao)}">${esc(e.ca ? 'C.A ' + e.ca : '')}</option>`).join('');
 }
@@ -373,7 +389,11 @@ function abrirFuncionario(id) {
   editandoFunc = f ? { ...f } : { id: db.novoId(), situacao: 'ATIVO', setor: modeloAtual().setor_padrao || 'CAMPO' };
   $('tituloFunc').textContent = f ? 'Editar funcionário' : 'Novo funcionário';
   $('fuNome').value = editandoFunc.nome || '';
+  $('fuApelido').value = editandoFunc.apelido || '';
   $('fuCadastro').value = editandoFunc.cadastro || '';
+  $('fuNascimento').value = (editandoFunc.nascimento || '').slice(0, 10);
+  $('fuTelefone').value = editandoFunc.telefone || '';
+  $('fuFazenda').value = editandoFunc.fazenda || '';
   $('fuAdmissao').value = (editandoFunc.admissao || '').slice(0, 10);
   $('fuCargo').value = editandoFunc.cargo || '';
   $('fuEmpregador').value = editandoFunc.empregador || '';
@@ -394,7 +414,11 @@ $('formFunc').addEventListener('submit', async ev => {
   const f = {
     ...editandoFunc,
     nome: $('fuNome').value.trim().replace(/\s+/g, ' '),
+    apelido: $('fuApelido').value.trim(),
     cadastro: $('fuCadastro').value.trim(),
+    nascimento: $('fuNascimento').value || null,
+    telefone: $('fuTelefone').value.trim(),
+    fazenda: $('fuFazenda').value.trim(),
     admissao: $('fuAdmissao').value || null,
     cargo: $('fuCargo').value.trim(),
     empregador: $('fuEmpregador').value.trim(),
@@ -418,6 +442,152 @@ $('bApagarFunc').addEventListener('click', async () => {
   naLista.delete(editandoFunc.id);
   $('dlgFunc').close();
   desenharFuncionarios(); desenharSelecao();
+});
+
+/* =============== importar a planilha =============== */
+const ROTULOS = {
+  apelido: 'apelido', cpf: 'CPF', nascimento: 'nascimento', telefone: 'telefone',
+  cadastro: 'nº de cadastro', admissao: 'admissão', empregador: 'empregador',
+  fazenda: 'fazenda', setor: 'setor', cargo: 'cargo',
+  tam_camisa: 'tam. camisa', tam_calcado: 'tam. calçado',
+};
+let importacao = null;   // { novos, completar } segurando o resultado da conferência
+
+$('bImportar').addEventListener('click', () => { $('arqPlanilha').value = ''; $('arqPlanilha').click(); });
+
+$('arqPlanilha').addEventListener('change', async ev => {
+  const arquivo = ev.target.files && ev.target.files[0];
+  if (!arquivo) return;
+  const erro = $('erroImportar'); erro.hidden = true;
+  $('resumoImportar').innerHTML = '<div class="imp-nada">Lendo a planilha...</div>';
+  $('bConfirmarImportar').disabled = true;
+  $('dicaImportar').textContent = '';
+  $('dlgImportar').showModal();
+  try {
+    const daPlanilha = await lerFuncionarios(arquivo);
+    if (!daPlanilha.length) throw new Error('Não achei nenhuma pessoa preenchida na aba Funcionários.');
+    importacao = comparar(daPlanilha, estado.funcionarios);
+    desenharImportacao(arquivo.name, daPlanilha.length);
+  } catch (e) {
+    importacao = null;
+    $('resumoImportar').innerHTML = '';
+    erro.textContent = e?.message || 'Não consegui ler a planilha.';
+    erro.hidden = false;
+  }
+});
+
+function desenharImportacao(nomeArquivo, lidas) {
+  const { novos, completar, iguais } = importacao;
+  const bloco = (titulo, itens, corpo) => `
+    <div class="imp-grupo">
+      <h4>${esc(titulo)}</h4>
+      <div class="cx">${itens.length ? itens.map(corpo).join('') : '<div class="imp-nada">Nenhum.</div>'}</div>
+    </div>`;
+
+  $('resumoImportar').innerHTML =
+    `<p class="dica">${esc(nomeArquivo)} · ${lidas} pessoa(s) na planilha.</p>` +
+    bloco(`Entram no cadastro (${novos.length})`, novos, p => `
+      <div class="imp-linha"><b>${esc(p.nome)}</b>
+        <span class="sub">${esc(p.cargo || '—')} · ${esc(p.empregador || '—')}${p.cadastro ? ' · nº ' + esc(p.cadastro) : ''}${p.nascimento ? ' · nasc. ' + esc(dataBr(p.nascimento)) : ''}</span>
+      </div>`) +
+    bloco(`Já cadastrados, completando o que está em branco (${completar.length})`, completar, c => `
+      <div class="imp-linha"><b>${esc(c.atual.nome)}</b>
+        <span class="sub">achado por ${esc(c.por)} · ${c.campos.length ? 'completa ' + c.campos.map(x => ROTULOS[x] || x).join(', ') : 'sem campos a completar'}${c.trocaSituacao ? ` · passa para ${esc(c.planilha.situacao)}` : ''}</span>
+      </div>`);
+
+  $('dicaImportar').textContent = `${iguais.length} já estão iguais e não serão tocados.`;
+  $('bConfirmarImportar').disabled = !(novos.length || completar.length);
+}
+
+$('formImportar').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  if (!importacao) return;
+  const botao = $('bConfirmarImportar');
+  botao.disabled = true; botao.textContent = 'Gravando...';
+  const { novos, completar } = importacao;
+  try {
+    for (const p of novos) {
+      const f = { id: db.novoId() };
+      for (const campo of ['nome', 'apelido', 'cpf', 'nascimento', 'telefone', 'cadastro',
+        'admissao', 'empregador', 'fazenda', 'setor', 'cargo', 'tam_camisa', 'tam_calcado', 'situacao']) {
+        f[campo] = p[campo] || (campo === 'nascimento' || campo === 'admissao' ? null : '');
+      }
+      f.situacao = p.situacao;
+      await db.salvarFuncionario(f);
+    }
+    for (const c of completar) {
+      await db.salvarFuncionario(aplicarEm(c.atual, c.planilha, c.campos, c.trocaSituacao));
+    }
+    mostrarAviso(`Importação pronta: ${novos.length} novo(s) e ${completar.length} completado(s).`);
+  } finally {
+    botao.textContent = 'Gravar';
+    importacao = null;
+    $('dlgImportar').close();
+    preencherControles(); desenharFuncionarios(); desenharSelecao(); desenharSelecaoLista();
+  }
+});
+
+function mostrarAviso(texto) {
+  const a = $('avisoGlobal');
+  a.textContent = texto; a.className = 'aviso ok'; a.hidden = false;
+  setTimeout(() => { a.hidden = true; a.className = 'aviso info'; }, 6000);
+}
+
+/* =============== aba ANIVERSARIANTES =============== */
+function listaAniversarios() {
+  const mes = +$('anMes').value;
+  const soAtivos = $('anSit').value === 'ativos';
+  return { mes, ano: +$('anAno').value || new Date().getFullYear(), soAtivos,
+    gente: aniversariantes(estado.funcionarios, mes, soAtivos) };
+}
+
+function atualizarAniversarios() {
+  const { mes, ano, soAtivos, gente } = listaAniversarios();
+
+  $('anLista').innerHTML = gente.length ? gente.map(a => `
+    <div class="item" style="grid-template-columns:auto 1fr auto">
+      <span class="tag ativo">dia ${String(a.dia).padStart(2, '0')}</span>
+      <span>
+        <span class="nome">${esc(a.nome)}${a.apelido ? ' · ' + esc(a.apelido) : ''}</span><br>
+        <span class="sub">${esc(a.cargo || '—')}${a.empregador ? ' · ' + esc(a.empregador) : ''}</span>
+      </span>
+      <span class="contagem">${ano - (+String(a.nascimento).slice(0, 4))} anos</span>
+    </div>`).join('')
+    : '<div class="vazio">Ninguém faz aniversário neste mês.</div>';
+
+  const faltando = semNascimento(estado.funcionarios, soAtivos);
+  const aviso = $('anAviso');
+  if (faltando) {
+    aviso.textContent = `${faltando} pessoa(s) ainda estão sem data de nascimento no cadastro — ` +
+      'importe a planilha ou preencha na aba Funcionários para aparecerem aqui.';
+    aviso.hidden = false;
+  } else aviso.hidden = true;
+
+  $('saidaAniversarios').innerHTML = montarAniversarios(gente, mes, ano);
+}
+
+['anMes', 'anAno', 'anSit'].forEach(id => $(id).addEventListener('input', atualizarAniversarios));
+$('bImprimirAniv').addEventListener('click', () => window.print());
+$('zoomAniv').addEventListener('input', () => {
+  const z = $('zoomAniv').value;
+  $('zoomVAniv').textContent = z + '%';
+  $('saidaAniversarios').style.transform = `scale(${z / 100})`;
+  $('saidaAniversarios').style.transformOrigin = 'top center';
+});
+
+$('bWhatsapp').addEventListener('click', () => {
+  const { mes, ano, gente } = listaAniversarios();
+  window.open(linkWhatsapp(textoWhatsapp(gente, mes, ano)), '_blank', 'noopener');
+});
+
+$('bCopiarAniv').addEventListener('click', async ev => {
+  const { mes, ano, gente } = listaAniversarios();
+  const botao = ev.currentTarget;
+  try {
+    await navigator.clipboard.writeText(textoWhatsapp(gente, mes, ano));
+    botao.textContent = 'Copiado';
+  } catch { botao.textContent = 'Não deu para copiar'; }
+  setTimeout(() => { botao.textContent = 'Copiar texto'; }, 1600);
 });
 
 /* =============== aba EPIS =============== */
