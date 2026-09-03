@@ -50,6 +50,7 @@
     </div>
     <nav class="abas" role="tablist">
       <button class="aba" role="tab" data-tela="fichas" aria-selected="true">Fichas</button>
+      <button class="aba" role="tab" data-tela="lista" aria-selected="false">Lista de presença</button>
       <button class="aba" role="tab" data-tela="funcionarios" aria-selected="false">Funcionários</button>
       <button class="aba" role="tab" data-tela="epis" aria-selected="false">EPIs</button>
       <button class="aba" role="tab" data-tela="modelo" aria-selected="false">Modelo da ficha</button>
@@ -103,6 +104,71 @@
         <span class="zoom">Zoom
           <input type="range" id="zoom" min="60" max="180" value="100" step="5">
           <span id="zoomV">100%</span>
+        </span>
+      </div>
+    </section>
+
+    <!-- ---- LISTA DE PRESENÇA ---- -->
+    <section class="tela" id="telaLista" hidden>
+      <form class="cartao naoimprimir" id="formLista">
+        <h2>Cabeçalho da lista</h2>
+        <p class="dica">Fica salvo e vale para os dois usuários.</p>
+        <div class="grade larga">
+          <label class="campo plena">Título
+            <input type="text" id="lpTitulo">
+          </label>
+          <label class="campo">Código
+            <input type="text" id="lpCodigo">
+          </label>
+          <label class="campo">Data
+            <input type="text" id="lpData" placeholder="14/12/2025">
+          </label>
+          <label class="campo">Revisão
+            <input type="text" id="lpRevisao">
+          </label>
+          <label class="campo plena">Elaboração/Revisão
+            <input type="text" id="lpElaboracao">
+          </label>
+          <label class="campo plena">Aprovação
+            <input type="text" id="lpAprovacao">
+          </label>
+        </div>
+        <div class="barra">
+          <button class="btn principal" type="submit">Salvar cabeçalho</button>
+          <button class="btn" type="button" id="bRestaurarLista">Restaurar original</button>
+        </div>
+      </form>
+
+      <div class="cartao naoimprimir">
+        <h2>Quem vai assinar</h2>
+        <p class="dica">Cada um marcado vira uma linha, com o cargo do cadastro. As linhas que sobram na última folha saem em branco.</p>
+        <div class="grade larga">
+          <label class="campo">Buscar <input type="text" id="buscaLista" placeholder="Digite o nome..."></label>
+          <label class="campo">Situação
+            <select id="fSitLista">
+              <option value="ATIVO">Somente ativos</option>
+              <option value="">Todos</option>
+              <option value="INATIVO">Somente inativos</option>
+            </select>
+          </label>
+          <label class="campo">Empregador <select id="fEmpLista"><option value="">Todos</option></select></label>
+        </div>
+        <div class="barra">
+          <button class="btn" id="bTodosLista">Marcar todos</button>
+          <button class="btn" id="bNenhumLista">Desmarcar todos</button>
+          <span class="contagem"><b id="cntLista">0</b> na lista · <b id="cntFolhas">1</b> folha(s)</span>
+        </div>
+        <div class="lista rolagem" id="listaSelLista" style="margin-top:12px"></div>
+      </div>
+
+      <div class="previa-lista" id="saidaLista"></div>
+
+      <div class="rodape-fixo naoimprimir">
+        <button class="btn principal" id="bImprimirLista">Imprimir lista</button>
+        <span class="cresce"></span>
+        <span class="zoom">Zoom
+          <input type="range" id="zoomLista" min="50" max="150" value="80" step="5">
+          <span id="zoomVLista">80%</span>
         </span>
       </div>
     </section>

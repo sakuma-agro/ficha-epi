@@ -62,8 +62,12 @@ create table if not exists public.modelo (
   linhas_padrao      smallint default 20,
   cargos             jsonb default '[]'::jsonb,
   empregadores       jsonb default '[]'::jsonb,
+  lista              jsonb default '{}'::jsonb,
   atualizado_em      timestamptz not null default now()
 );
+
+-- cabeçalho da lista de presença (FORMAGR-018), para bancos criados antes
+alter table public.modelo add column if not exists lista jsonb default '{}'::jsonb;
 
 -- ---------- carimbo de atualização ----------
 create or replace function public.marcar_atualizacao()
