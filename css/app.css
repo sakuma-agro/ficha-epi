@@ -198,7 +198,7 @@ dialog h3{margin:0 0 14px;font-size:16px}
   background:#fff;color:#000;box-shadow:0 4px 20px rgba(0,0,0,.16);
   font-family:Calibri,"Segoe UI",Carlito,Arial,sans-serif}
 .lp-t{position:absolute;line-height:1;white-space:nowrap}
-.lp-r{position:absolute;background:#000}
+.lp-r{position:absolute;border-top:0 solid #000}
 .lp-sub{text-decoration:underline}
 
 .lp-cab,.lp-tab{position:absolute;border-collapse:collapse;table-layout:fixed}
