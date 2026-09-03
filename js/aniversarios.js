@@ -13,12 +13,6 @@ const partes = iso => {
   return m ? { ano: +m[1], mes: +m[2] - 1, dia: +m[3] } : null;
 };
 
-/** Idade que a pessoa completa no aniversário deste ano. */
-const idadeNo = (iso, ano) => {
-  const p = partes(iso);
-  return p ? ano - p.ano : null;
-};
-
 /**
  * Aniversariantes de um mês, em ordem de dia.
  * @param {Array} funcionarios  lista do cadastro
@@ -50,10 +44,8 @@ export function montarAniversarios(lista, mes, ano) {
       ? fatia.map(a => `<tr>
           <td class="an-dia">${String(a.dia).padStart(2, '0')}</td>
           <td class="an-nome">${esc(a.nome)}${a.apelido ? ` <span class="an-apelido">(${esc(a.apelido)})</span>` : ''}</td>
-          <td>${esc(a.cargo || '—')}</td>
-          <td class="an-idade">${idadeNo(a.nascimento, ano) ?? '—'}</td>
         </tr>`).join('')
-      : `<tr><td colspan="4" class="an-vazio">Nenhum aniversariante neste mês.</td></tr>`;
+      : `<tr><td colspan="2" class="an-vazio">Nenhum aniversariante neste mês.</td></tr>`;
 
     folhas.push(`<div class="an-folha">
       <div class="an-topo">
@@ -64,8 +56,8 @@ export function montarAniversarios(lista, mes, ano) {
         </div>
       </div>
       <table class="an-tab">
-        <colgroup><col style="width:14mm"><col><col style="width:52mm"><col style="width:20mm"></colgroup>
-        <thead><tr><th>DIA</th><th>NOME</th><th>FUNÇÃO</th><th>IDADE</th></tr></thead>
+        <colgroup><col style="width:18mm"><col></colgroup>
+        <thead><tr><th>DIA</th><th>NOME</th></tr></thead>
         <tbody>${linhas}</tbody>
       </table>
       <div class="an-pe">
@@ -82,12 +74,9 @@ export function montarAniversarios(lista, mes, ano) {
 export function textoWhatsapp(lista, mes, ano) {
   const cabeca = `*Aniversariantes de ${MESES[mes]} de ${ano}*`;
   if (!lista.length) return `${cabeca}\n\nNinguém faz aniversário neste mês.`;
-  const linhas = lista.map(a => {
-    const idade = idadeNo(a.nascimento, ano);
-    const como = a.apelido ? `${a.nome} (${a.apelido})` : a.nome;
-    return `${String(a.dia).padStart(2, '0')}/${String(mes + 1).padStart(2, '0')} - ${como}` +
-      (idade ? ` - ${idade} anos` : '');
-  });
+  const linhas = lista.map(a =>
+    `${String(a.dia).padStart(2, '0')}/${String(mes + 1).padStart(2, '0')} - ` +
+    (a.apelido ? `${a.nome} (${a.apelido})` : a.nome));
   return `${cabeca}\n\n${linhas.join('\n')}\n\nSAKUMA Agronegócios`;
 }
 

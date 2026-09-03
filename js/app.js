@@ -545,13 +545,9 @@ function atualizarAniversarios() {
   const { mes, ano, soAtivos, gente } = listaAniversarios();
 
   $('anLista').innerHTML = gente.length ? gente.map(a => `
-    <div class="item" style="grid-template-columns:auto 1fr auto">
+    <div class="item" style="grid-template-columns:auto 1fr">
       <span class="tag ativo">dia ${String(a.dia).padStart(2, '0')}</span>
-      <span>
-        <span class="nome">${esc(a.nome)}${a.apelido ? ' · ' + esc(a.apelido) : ''}</span><br>
-        <span class="sub">${esc(a.cargo || '—')}${a.empregador ? ' · ' + esc(a.empregador) : ''}</span>
-      </span>
-      <span class="contagem">${ano - (+String(a.nascimento).slice(0, 4))} anos</span>
+      <span class="nome">${esc(a.nome)}${a.apelido ? ' (' + esc(a.apelido) + ')' : ''}</span>
     </div>`).join('')
     : '<div class="vazio">Ninguém faz aniversário neste mês.</div>';
 
