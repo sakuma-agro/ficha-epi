@@ -17,10 +17,23 @@ create table if not exists public.funcionarios (
   tam_calcado  text,
   tam_camisa   text,
   situacao     text not null default 'ATIVO',
+  nascimento   date,
+  telefone     text,
+  apelido      text,
+  fazenda      text,
   criado_em    timestamptz not null default now(),
   atualizado_em timestamptz not null default now()
 );
 create index if not exists funcionarios_nome_idx on public.funcionarios (nome);
+
+-- campos usados pelos aniversariantes e pela importação da planilha,
+-- para bancos criados antes
+alter table public.funcionarios
+  add column if not exists nascimento date,
+  add column if not exists telefone   text,
+  add column if not exists apelido    text,
+  add column if not exists fazenda    text;
+create index if not exists funcionarios_nascimento_idx on public.funcionarios (nascimento);
 
 -- ---------- catálogo de EPIs ----------
 create table if not exists public.epis (
